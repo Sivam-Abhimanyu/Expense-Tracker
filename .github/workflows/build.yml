@@ -1,0 +1,40 @@
+name: Build Android APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK Environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Python Engine
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install System and Buildozer Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libsqlite3-dev cmake libssl-dev
+          pip install --upgrade pip
+          pip install buildozer cython git+https://github.com/kivy/buildozer.git@master
+
+      - name: Compile APK via Buildozer
+        run: |
+          # The "yes |" pipe automatically accepts any Android SDK/NDK licensing popups
+          yes | buildozer -v android debug
+
+      - name: Upload Finished APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-Debug-APK
+          path: bin/*.apk
+          
